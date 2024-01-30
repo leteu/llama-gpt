@@ -20,9 +20,6 @@ dependencies:
   marked-highlight:
     specifier: ^2.0.4
     version: 2.0.4(marked@7.0.5)
-  prismjs:
-    specifier: ^1.29.0
-    version: 1.29.0
   readable-stream:
     specifier: ^4.4.2
     version: 4.4.2
@@ -34,9 +31,6 @@ dependencies:
     version: 3.3.4
 
 devDependencies:
-  '@types/prismjs':
-    specifier: ^1.26.0
-    version: 1.26.0
   '@types/readable-stream':
     specifier: ^4.0.2
     version: 4.0.2
@@ -288,10 +282,6 @@ packages:
 
   /@types/node@20.5.7:
     resolution: {integrity: sha512-dP7f3LdZIysZnmvP3ANJYTSwg+wLLl8p7RqniVlV7j+oXSXAbt9h0WIBFmJy5inWZoX9wZN6eXx+YXd9Rh3RBA==}
-    dev: true
-
-  /@types/prismjs@1.26.0:
-    resolution: {integrity: sha512-ZTaqn/qSqUuAq1YwvOFQfVW1AR/oQJlLSZVustdjwI+GZ8kr0MSHBj0tsXPW1EqHubx50gtBEjbPGsdZwQwCjQ==}
     dev: true
 
   /@types/readable-stream@4.0.2:
@@ -724,11 +714,6 @@ packages:
       nanoid: 3.3.6
       picocolors: 1.0.0
       source-map-js: 1.0.2
-
-  /prismjs@1.29.0:
-    resolution: {integrity: sha512-Kx/1w86q/epKcmte75LNrEoT+lX8pBpavuAbvJWRXar7Hz8jrtF+e3vY751p0R8H9HdArwaCTNDDzHg/ScJK1Q==}
-    engines: {node: '>=6'}
-    dev: false
 
   /process@0.11.10:
     resolution: {integrity: sha512-cdGef/drWFoydD1JsMzuFf8100nZl+GT+yacc2bEced5f9Rjk4z+WtFUTBu9PhOi9j/jfmBPu0mMEY4wIdAF8A==}

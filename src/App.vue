@@ -77,8 +77,8 @@ const onSubmit = async (e: KeyboardEvent | MouseEvent) => {
   qnaList.value.push({ ask: askInput.value, answer: '' })
   askInput.value = ''
   const result = await fetch(
-    `http://192.168.0.131:8080/llama?prompt=${
-      qnaList.value[qnaList.value.length - 1].ask
+    `http://localhost:8080/llama?prompt=${
+      encodeURIComponent(qnaList.value[qnaList.value.length - 1].ask.replace(/^[\u200B|\u200C|\u200D|\u200E|\u200F|\uFEFF]/, ''))
     }`
   )
 
@@ -86,7 +86,7 @@ const onSubmit = async (e: KeyboardEvent | MouseEvent) => {
 }
 
 const getMarkdown = (contents: string) => {
-  return marked.parse(contents.replace(/^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/, ''))
+  return marked.parse(contents.replace(/^[\u200B|\u200C|\u200D|\u200E|\u200F|\uFEFF]/, ''))
 }
 </script>
 
