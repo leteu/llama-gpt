@@ -1,22 +1,24 @@
 <template>
-  <div>
-    <template
-      v-for="({ ask, answer }, index) in qnaList"
-      :key="`qna-box-${index}`"
-    >
-      <div style="display: flex;">
-        <h1>Q.</h1>
-        <div style="flex: 1" v-html="getMarkdown(ask)"></div>
-      </div>
-      <div style="display: flex;">
-        <h1>A.</h1>
-        <div style="flex: 1" v-html="getMarkdown(answer)"></div>
-      </div>
-    </template>
-  </div>
-  <div>
-    <textarea v-model="askInput" @keydown.enter.prevent="onSubmit" />
-    <button @click="onSubmit">전송</button>
+  <div class="chat-container">
+    <div ref="scrollArea">
+      <template
+        v-for="({ ask, answer }, index) in qnaList"
+        :key="`qna-box-${index}`"
+      >
+        <div class="chatbox">
+          <h1 class="chatbox__type">Q.</h1>
+          <div class="chatbox__content" v-html="getMarkdown(ask)"></div>
+        </div>
+        <div class="chatbox">
+          <h1 class="chatbox__type">A.</h1>
+          <div class="chatbox__content" v-html="getMarkdown(answer)"></div>
+        </div>
+      </template>
+    </div>
+    <form class="chatform">
+      <textarea v-model="askInput" @keydown.enter.prevent="onSubmit" />
+      <button @click="onSubmit">전송</button>
+    </form>
   </div>
 </template>
 
@@ -27,12 +29,17 @@ import { Marked } from 'marked'
 import { markedHighlight } from 'marked-highlight'
 import hljs from 'highlight.js'
 
+const scrollArea = ref<HTMLDivElement>()
+
 const marked = new Marked(
   markedHighlight({
     langPrefix: 'hljs language-',
     highlight(code, lang) {
-      const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-      return hljs.highlight(code, { language }).value;
+      const a = hljs.highlightAuto(code, [lang, 'plaintext']).value
+
+      console.log(a)
+
+      return a
     }
   })
 )
@@ -59,25 +66,56 @@ async function readAllChunks(readableStream: ReadableStream) {
   while (!done) {
     ;({ value, done } = await reader.read())
 
-    const parseObj = JSON.parse(new TextDecoder().decode(value))
+    try {
+      const parseObj = JSON.parse(new TextDecoder().decode(value))
 
-    if (done || parseObj.done) {
-      return chunks
+      if (done || parseObj.done) {
+        return chunks
+      }
+
+      qnaList.value[qnaList.value.length - 1].answer += parseObj.response
+      chunks.push(value)
+      scrollArea.value?.scroll({ top: scrollArea.value.scrollHeight })
+    } catch (e) {
+      await Promise.all(
+        new TextDecoder()
+        .decode(value)
+        .split('}\n')
+        .map((el, index, arr) => {
+          return new Promise<void | Uint8Array[]>((res) => {
+            if (!el.trim()) res()
+
+            if (index !== arr.length - 1) {
+              el = el + '}'
+            }
+
+            const parseObj = JSON.parse(el)
+
+            if (parseObj.done) res(chunks)
+
+            qnaList.value[qnaList.value.length - 1].answer += parseObj.response
+            scrollArea.value?.scroll({ top: scrollArea.value.scrollHeight })
+            res()
+          })
+        })
+      )
+      chunks.push(value)
     }
-    qnaList.value[qnaList.value.length - 1].answer += parseObj.response
-    chunks.push(value)
   }
 }
 
 const onSubmit = async (e: KeyboardEvent | MouseEvent) => {
-  if ((e as KeyboardEvent).key === 'Enter' && (e.ctrlKey || e.metaKey)) return
+  if ((e as KeyboardEvent).key === 'Enter' && (e.ctrlKey || e.metaKey || e.shiftKey)) {
+    askInput.value += '\n'
+    return
+  }
 
   if (!askInput.value.trim()) return
 
   qnaList.value.push({ ask: askInput.value, answer: '' })
   askInput.value = ''
   const result = await fetch(
-    `http://localhost:8080/llama?prompt=${
+    `http://localhost:4000/llama?prompt=${
       encodeURIComponent(qnaList.value[qnaList.value.length - 1].ask.replace(/^[\u200B|\u200C|\u200D|\u200E|\u200F|\uFEFF]/, ''))
     }`
   )
@@ -90,4 +128,64 @@ const getMarkdown = (contents: string) => {
 }
 </script>
 
-<style lang="sass"></style>
+<style lang="sass">
+.chat-container
+  width: 800px
+  height: calc(100vh - 32px)
+  margin: 16px auto
+  padding: 16px
+  display: flex
+  flex-direction: column
+  box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.1)
+  > div:first-child
+    flex: 1
+    overflow: auto
+
+.chatbox
+  display: flex
+  width: 100%
+  margin-bottom: 8px
+  &__type
+    width: 75px
+    position: relative
+    &::after
+      content: ''
+      position: absolute
+      right: 20px
+      top: 0
+      background: #ccc
+      width: 5px
+      border-radius: 2.5px
+      height: 100%
+      margin: 4px 0
+  &__content
+    width: calc(100% - 75px)
+    display: flex
+    flex-direction: column
+    padding: 8px
+    height: auto
+    min-height: 0
+    max-height: 100%
+
+.chatform
+  border: 1px solid #ccc
+  border-radius: 5px
+  display: flex
+  flex-direction: row
+  overflow: hidden
+  margin-top: 24px
+  textarea
+    width: 100%
+    padding: 10px
+    border: none
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2)
+  button
+    width: 100px
+    padding: 10px
+    border: none
+    background-color: #4CAF50
+    color: white
+    cursor: pointer
+    &:hover
+      background-color: #3e8e41
+</style>
